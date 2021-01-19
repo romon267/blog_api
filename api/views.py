@@ -66,13 +66,14 @@ class UserFollow(APIView):
     def post(self, request, pk, format=None):
         user = request.user
         follow = self.get_object(pk)
-        UserFollowing.objects.create(user_id=user.id, following_user_id = follow.id)
+        UserFollowing.objects.create(user_id=user, following_user_id = follow)
         serializer = UserSerializer(follow)
         return Response(serializer.data)
 
     def delete(self, request, pk, format=None):
         user = request.user
         follow = self.get_object(pk)
-        UserFollowing.objects.delete(user_id=user.id, following_user_id = follow.id)
+        connection = UserFollowing.objects.filter(user_id=user, following_user_id = follow).first()
+        connection.delete()
         serializer = UserSerializer(follow)
         return Response(serializer.data)
