@@ -1,4 +1,4 @@
-from rest_framework import generics, permissions, renderers, viewsets
+from rest_framework import permissions, viewsets, status
 from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework.decorators import api_view, action
@@ -24,6 +24,24 @@ class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
 
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        if instance.is_edited == False:
+            instance.is_edited = True
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
@@ -32,6 +50,24 @@ class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        if instance.is_edited == False:
+            instance.is_edited = True
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -49,9 +85,6 @@ class UserFollowingViewSet(viewsets.ModelViewSet):
 
 
 class UserFollow(APIView):
-    """
-    Retrieve, update or delete a snippet instance.
-    """
     def get_object(self, pk):
         try:
             return User.objects.get(pk=pk)
