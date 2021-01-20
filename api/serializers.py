@@ -4,6 +4,7 @@ from .models import Post, Comment, UserFollowing
 
 class PostSerializer(serializers.ModelSerializer):
     author = serializers.ReadOnlyField(source='author.username')
+    is_edited = serializers.ReadOnlyField()
     
     class Meta:
         model = Post
@@ -28,22 +29,31 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.ReadOnlyField(source='author.username')
+    is_edited = serializers.ReadOnlyField()
+    
     class Meta:
         model = Comment
         fields = '__all__'# ['url', 'id', 'author', 'content']
 
 
 class UserFollowingSerializer(serializers.ModelSerializer):
+    following = serializers.ReadOnlyField(source='following_user_id.username')
+    follower = serializers.ReadOnlyField(source='user_id.username')
     class Meta:
         model = UserFollowing
-        fields = '__all__'
+        fields = ['id', 'created', 'following', 'follower']
 
 class FollowingSerializer(serializers.ModelSerializer):
+    username = serializers.ReadOnlyField(source='following_user_id.username')
+
     class Meta:
         model = UserFollowing
-        fields = ['id', 'following_user_id', 'created']
+        fields = ['following_user_id', 'username', 'created']
 
 class FollowersSerializer(serializers.ModelSerializer):
+    username = serializers.ReadOnlyField(source='user_id.username')
+
     class Meta:
         model = UserFollowing
-        fields = ['id', 'user_id', 'created']
+        fields = ['user_id', 'username', 'created']
